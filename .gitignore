@@ -1,0 +1,22 @@
+# Archivos y directorios generados por compilaciones
+/bin/
+/pkg/
+*.out
+
+# Archivos de caché de Go
+/go-build/
+.cache/
+
+# Directorio de dependencias de Go
+vendor/
+vgo.mod
+go.sum
+
+# Archivos de configuración de IDE
+.idea/
+.vscode/
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
