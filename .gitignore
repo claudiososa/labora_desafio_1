@@ -1,7 +1,9 @@
 # Archivos y directorios generados por compilaciones
 /bin/
 /pkg/
+/messages/
 *.out
+*.txt
 
 # Archivos de caché de Go
 /go-build/

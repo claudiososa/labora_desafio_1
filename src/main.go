@@ -28,8 +28,6 @@ type UserAuthenticated struct {
 var (
 	directorActions = []string{"Listar profesores", "Agregar Profesor", "Eliminar Profesor", "Generar mensaje para profesor"}
 	teacherActions  = []string{"Listar alumnos", "Agregar Alumno", "Eliminar Alumno", "Generar mensaje para alumno"}
-	laborers        []string
-	actionCounter   = make(map[string]int)
 )
 
 func main() {
@@ -72,7 +70,7 @@ func main() {
 
 				userAuthenticated = loginUser(username, password, users)
 
-				if userAuthenticated.status == false {
+				if !userAuthenticated.status {
 					clearScreen()
 					printSimpleText("ATENCION! Datos de acceso incorrectos")
 					printLine()
@@ -101,8 +99,12 @@ func main() {
 			fmt.Scanln(&option)
 
 			switch option {
+
+			//Listar profesores
 			case 1:
 				listUsers("profesor", users, false)
+
+			//Agregar profesor
 			case 2:
 				var newTeacher User
 
@@ -115,13 +117,13 @@ func main() {
 				//Agrego el nuevo teacher a users
 				users = append(users, newTeacher)
 
-				break
+			//Borrar profesor
 			case 3:
 				users = deleteUser("profesor", users)
-				break
+
+			// Crear mensaje para profesor
 			case 4:
-				createNewMessage()
-				break
+				createNewMessage("profesor", users)
 			case 0: //Cerrar Sesion
 				userAuthenticated = UserAuthenticated{
 					username: "",
@@ -161,10 +163,11 @@ func main() {
 				//Agrego el nuevo alumno a users
 				users = append(users, newStudent)
 
-				break
 			case 3:
 				users = deleteUser("alumno", users)
-				break
+
+			case 4:
+				createNewMessage("alumno", users)
 
 			case 0: //Cerrar Sesion
 				userAuthenticated = UserAuthenticated{
@@ -231,7 +234,7 @@ func listUsers(role string, users []User, onlyLists bool) {
 	printLine()
 	for _, user := range users {
 		if user.role == role {
-			fmt.Println("Name: ", user.name, "Rol: ", user.role, "id", user.id)
+			fmt.Println("id: ", user.id, " Name: ", user.name, "Rol: ", role)
 		}
 	}
 	if !onlyLists {
@@ -256,7 +259,8 @@ func getNextId(users []User) int {
 
 func createNewUser(nextId int, userType string) User {
 	clearScreen()
-
+	fmt.Println("Agregar ", userType)
+	printLine()
 	var name string
 
 	printSimpleText("Nombre Completo:")
@@ -305,12 +309,40 @@ func deleteUser(userType string, users []User) []User {
 	return users
 }
 
-func createNewMessage() {
+func findUser(userType string, user_id int, users []User) User {
+	var userFound User
+	for _, user := range users {
+		if user.id == user_id && user.role == userType {
+			userFound = user
+			break
+		}
+	}
+	return userFound
+}
+
+func createNewMessage(userType string, users []User) {
 	clearScreen()
-	printSimpleText("Crear Mensaje :")
+	listUsers(userType, users, true)
 	printLine()
+	fmt.Println("Ingrese el id del ", userType, " destinatario del mensaje")
+	var userFound User
+	for {
+		var user_id int
+		fmt.Scanln(&user_id)
+		userFound = findUser(userType, user_id, users)
+
+		if isUserEmpty(userFound) {
+			printSimpleText("Id ingresado no es valido, por favor vuelva a ingresar")
+		} else {
+			break
+		}
+	}
+	printLine()
+	fmt.Println("Crear Mensaje  / Destinatario: ", userFound.name)
+	printLine()
+
 	prompt := promptui.Prompt{
-		Label: "Escribe aqui tu mensaje",
+		Label: "Escribe aqui el mensaje",
 		Validate: func(input string) error {
 			fmt.Printf("\rLongitud actual: %d", len(input))
 			time.Sleep(100 * time.Millisecond)
@@ -335,9 +367,13 @@ func createNewMessage() {
 	generateTextFile(result)
 }
 
+func isUserEmpty(user User) bool {
+	return user.id == 0 && user.username == "" && user.password == "" && user.name == "" && user.role == ""
+}
+
 func generateTextFile(text string) {
 	fileName := fmt.Sprintf("mensajes_%s.txt", time.Now().Format("20060102_150405"))
-	file, err := os.Create(fileName)
+	file, err := os.Create("messages/" + fileName)
 	if err != nil {
 		fmt.Printf("Error al crear el archivo: %v\n", err)
 		return
